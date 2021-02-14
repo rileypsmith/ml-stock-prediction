@@ -29,6 +29,10 @@ def plot_predicted_close(ticker, pred, true, save_to=None):
     # Generate x values as ordinary arange
     x = np.arange(pred.size)
 
+    # Reverse pred and true so that most recent entries are last
+    pred = pred[::-1]
+    true = true[::-1]
+
     # Plot both predictions and true values on same axis
     ax.plot(x, pred, color='red')
     ax.plot(x, true, color='blue')
@@ -39,11 +43,58 @@ def plot_predicted_close(ticker, pred, true, save_to=None):
     # Build legend
     red_patch = mpatches.Patch(color='red', label='Actual close')
     blue_patch = mpatches.Patch(color='blue', label='Predicted close')
+    plt.legend(handles=[red_patch, blue_patch])
 
     # Set title
     plt.title(ticker)
 
     # Save output
+    if save_to:
+        plt.savefig(save_to)
+    else:
+        plt.show(block=True)
+
+def plot_all_predicted_close(results_dict, save_to=None):
+    """
+    Plots the predicted close for each ticker in the results dictionary as
+    subplots in one figure.
+
+    Args:
+    --results_dict: A dictionary where each key is a ticker and each value is
+        a dictionary containing the keys:
+            -'v_pred' (predicted closing prices)
+            -'v_true' (actual closing prices)
+    --save_to: If None, just show the figure with plt.show(). If a string, save
+        the figure to that path.
+    """
+    # Build figure
+    num_tickers = len(results_dict.keys())
+    nrows = 2 if num_tickers >= 4 else 1
+    ncols = int(np.ceil(num_tickers / 2)) if num_tickers >= 4 else num_tickers
+    fig, axs = plt.subplots(nrows=nrows, ncols=ncols, figsize=(6 * ncols, 6 * nrows))
+    reshaped_axs = axs.reshape(-1)
+
+    for i, ticker in enumerate(results_dict):
+        # Get pred, true
+        pred = results_dict[ticker]['v_pred'][::-1] # Reverse array
+        true = results_dict[ticker]['v_true'][::-1]
+
+        # Set x values
+        x = np.arange(pred.size)
+
+        # Plot it
+        reshaped_axs[i].plot(x, pred, color='red')
+        reshaped_axs[i].plot(x, true, color='blue')
+
+        # Set subplot title
+        reshaped_axs[i].title.set_text(ticker)
+
+    # Build legend
+    red_patch = mpatches.Patch(color='red', label='Actual close')
+    blue_patch = mpatches.Patch(color='blue', label='Predicted close')
+    plt.legend(handles=[red_patch, blue_patch])
+
+    # Optionally save figure
     if save_to:
         plt.savefig(save_to)
     else:
